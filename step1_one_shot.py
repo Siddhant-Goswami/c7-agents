@@ -22,17 +22,15 @@ The question this file asks:
 
     Who decides what happens next?
 
-Everything above the line marked GIVENS is plumbing you already understand.
-Read it once, then forget it. The lecture is below that line.
+Everything above the line marked THE LECTURE STARTS HERE is plumbing you
+already understand. Read it once, then forget it.
 """
 
 import json
 import os
 import pathlib
-import re
-import time
 
-import requests
+from groq import BadRequestError, Groq
 
 # ══════════════════════════════════════════════════════════════════════════
 #  GIVENS — the two halves. Nothing here is the idea.
@@ -40,96 +38,40 @@ import requests
 #
 #  The probabilistic half: llm() and llm_json(), which send text to a model.
 #  The deterministic half: get_ticket() and get_employee(), which read a file.
-#
-#  Both providers speak the same OpenAI-shaped API, so this is ONE code path.
-#  No SDK, no framework — just requests.
 
-if pathlib.Path(".env").exists():  # optional convenience, not required
-    for line in pathlib.Path(".env").read_text().splitlines():
-        if "=" in line and not line.strip().startswith("#"):
-            key, _, value = line.partition("=")
-            os.environ.setdefault(key.strip(), value.strip())
+MODEL = os.getenv("MODEL", "openai/gpt-oss-20b")
 
-PROVIDER = os.getenv("PROVIDER", "groq")
-
-if PROVIDER == "groq":
-    BASE_URL = "https://api.groq.com/openai/v1/chat/completions"
-    MODEL = os.getenv("MODEL", "openai/gpt-oss-20b")
-    API_KEY = os.getenv("GROQ_API_KEY", "")
-else:
-    BASE_URL = "http://localhost:11434/v1/chat/completions"
-    MODEL = os.getenv("MODEL", "qwen3.5:9b")
-    API_KEY = "ollama"
-
-SYSTEM = "You are a precise assistant. Answer directly, no preamble."
+# Reads GROQ_API_KEY from your environment. max_retries makes it sit out the
+# rate limits a free key will hit during a lecture.
+client = Groq(max_retries=6)
 
 
-def _chat(prompt: str, system: str, as_json: bool) -> str:
-    """One HTTP request. Retries on rate limits so a free key survives a lecture."""
-    if PROVIDER == "groq" and not API_KEY:
-        raise SystemExit(
-            "\nNo GROQ_API_KEY set.\n"
-            "  export GROQ_API_KEY=gsk_...      (free key: https://console.groq.com/keys)\n"
-            "  ...or run fully offline:  PROVIDER=ollama python3 step1_one_shot.py\n"
-        )
-
-    body = {
-        "model": MODEL,
-        "temperature": 0.2,
-        "messages": [
-            {"role": "system", "content": system},
-            {"role": "user", "content": prompt},
-        ],
-    }
-    if as_json:
-        body["response_format"] = {"type": "json_object"}
-
-    for attempt in range(6):
-        response = requests.post(
-            BASE_URL, json=body, timeout=600,
-            headers={"Authorization": f"Bearer {API_KEY}"},
-        )
-
-        if response.status_code == 429:  # free tiers are rate limited; wait it out
-            hint = re.search(r"try again in ([\d.]+)s", response.text)
-            wait = float(hint.group(1)) + 1 if hint else 8.0
-            print(f"    (rate limited, waiting {wait:.0f}s)")
-            time.sleep(wait)
-            continue
-
-        # In strict JSON mode the API rejects the model's own malformed output.
-        # It is a coin-flip, not a bug in your prompt — so just ask again.
-        if response.status_code == 400 and "json_validate" in response.text:
-            print("    (model emitted invalid JSON, retrying)")
-            continue
-
-        if not response.ok:  # never make a student debug a bare status code
-            raise SystemExit(f"\n{PROVIDER} returned {response.status_code}:\n{response.text[:400]}\n")
-
-        return (response.json()["choices"][0]["message"].get("content") or "").strip()
-
-    raise SystemExit("Six failed attempts in a row. Wait a minute and re-run.")
-
-
-def llm(prompt: str, system: str = SYSTEM) -> str:
+def llm(prompt: str) -> str:
     """Text in, text out. For things a human reads."""
-    return _chat(prompt, system, as_json=False)
+    reply = client.chat.completions.create(
+        model=MODEL, temperature=0.2, messages=[{"role": "user", "content": prompt}]
+    )
+    return reply.choices[0].message.content.strip()
 
 
-def llm_json(prompt: str, system: str = SYSTEM) -> dict:
+def llm_json(prompt: str) -> dict:
     """Text in, dict out. For decisions the PROGRAM has to branch on.
 
     `if reflection["answer"]` needs a dict, not a paragraph. That is the only
-    difference between this and llm().
+    difference between this and llm(). Models occasionally fumble the format,
+    so we simply ask again.
     """
-    text = _chat(prompt, system + " Reply with a single JSON object.", as_json=True)
-    try:
-        return json.loads(text)
-    except json.JSONDecodeError:
-        match = re.search(r"\{.*\}", text, re.DOTALL)  # survive a stray code fence
-        if not match:
-            raise ValueError(f"Model did not return JSON:\n{text}")
-        return json.loads(match.group(0))
+    for _ in range(3):
+        try:
+            reply = client.chat.completions.create(
+                model=MODEL, temperature=0.2,
+                response_format={"type": "json_object"},
+                messages=[{"role": "user", "content": prompt}],
+            )
+            return json.loads(reply.choices[0].message.content)
+        except (BadRequestError, json.JSONDecodeError):
+            continue  # malformed JSON, from the model or rejected by the API
+    raise RuntimeError("The model failed to return valid JSON three times.")
 
 
 DATA = json.loads(pathlib.Path(__file__).with_name("data.json").read_text())
@@ -149,16 +91,11 @@ def get_employee(employee_id: str) -> dict:
 # these and nothing else. Notice this is a plain dict.
 TOOLS = {"get_ticket": get_ticket, "get_employee": get_employee}
 
-TOOL_MENU = {
-    "get_ticket": 'args {"ticket_id": "T-…"} -> {subject, filed_by, priority}',
-    "get_employee": 'args {"employee_id": "E-…"} -> {name, team, manager}',
-}
-
 GOAL = "What is the NAME of the manager of the person who filed ticket T-1002?"
 
 
-def rule(label=""):
-    print(f"\n── {label} " + "─" * max(0, 74 - len(label)) if label else "─" * 76)
+def rule(label):
+    print(f"\n── {label} " + "─" * max(0, 74 - len(label)))
 
 
 # ══════════════════════════════════════════════════════════════════════════
@@ -166,17 +103,14 @@ def rule(label=""):
 # ══════════════════════════════════════════════════════════════════════════
 
 if __name__ == "__main__":
-    print(f"provider={PROVIDER}  model={MODEL}")
-    print(f"\nGOAL: {GOAL}")
+    print(f"model={MODEL}\n\nGOAL: {GOAL}")
 
     # ─── ATTEMPT A ─── one tool call, then ask the model ──────────────────
     rule("ATTEMPT A — one tool call, like last week")
 
     ticket = get_ticket("T-1002")
     print(f"get_ticket('T-1002') -> {ticket}")
-
-    answer = llm(f"Question: {GOAL}\n\nData: {ticket}\n\nAnswer in one short sentence.")
-    print(f"\nanswer: {answer}")
+    print(f"\nanswer: {llm(f'Question: {GOAL}. Data: {ticket}. Answer in one short sentence.')}")
 
     print(
         "\nThe ticket knows WHO filed it (E-17). It does not know who manages E-17,\n"
@@ -207,15 +141,12 @@ if __name__ == "__main__":
 
     hop1 = get_ticket("T-1007")
     hop2 = get_employee(hop1["filed_by"])
+    hop3 = get_employee(hop2["manager"])
+
     print(f"hop 1  get_ticket('T-1007')      -> filed_by = {hop1['filed_by']}")
     print(f"hop 2  get_employee('{hop1['filed_by']}')       -> manager  = {hop2['manager']}")
-
-    try:
-        hop3 = get_employee(hop2["manager"])
-        print(f"hop 3  get_employee({hop2['manager']}) -> {hop3}")
-        print(f"\nanswer: {hop3.get('name')}   ← garbage. E-01 is the CEO; there is no hop 3.")
-    except Exception as error:
-        print(f"\nCRASH: {type(error).__name__}: {error}")
+    print(f"hop 3  get_employee({hop2['manager']})        -> {hop3}")
+    print(f"\nanswer: {hop3.get('name')}   ← garbage. E-01 is the CEO; there is no hop 3.")
 
     print(
         "\nSame program. Different ticket. The chain was two hops long, not three,\n"
@@ -233,7 +164,7 @@ if __name__ == "__main__":
 #   Q1. Who decided get_ticket() should be called first?        → we did
 #   Q2. Who decided "E-17" was the argument to hop 2?           → we did
 #   Q3. Who decided there were exactly three hops?              → we did
-#   Q4. Who reads the crash above and picks the fix?            → we do
+#   Q4. Who reads the garbage above and picks the fix?          → we do
 #
 # The shape is still:   Human → Tool → Tool → Tool → LLM → Human
 # The LLM PARTICIPATES in this workflow. It does not CONTROL it.

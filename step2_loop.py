@@ -25,7 +25,7 @@ Pick one. But have one, and write it BEFORE the first run.
 Now — everything else in this file is stuff you already own.
 """
 
-from step1_one_shot import GOAL, TOOL_MENU, TOOLS, llm_json, rule
+from step1_one_shot import GOAL, TOOLS, llm_json, rule
 
 MAX_STEPS = 5  # ← the boundary. Written before the freedom, on purpose.
 
@@ -38,9 +38,9 @@ def decide_next(goal, history):
     """
     return llm_json(
         "Propose the SINGLE next tool call that makes progress on the GOAL.\n\n"
-        f"TOOLS (only these exist):\n"
-        f'  get_ticket    args {{"ticket_id":"T-…"}}    -> {{subject, filed_by}}\n'
-        f'  get_employee  args {{"employee_id":"E-…"}}  -> {{name, manager}}\n\n'
+        "TOOLS (only these exist):\n"
+        '  get_ticket    args {"ticket_id":"T-…"}    -> {subject, filed_by}\n'
+        '  get_employee  args {"employee_id":"E-…"}  -> {name, manager}\n\n'
         "RULE: never repeat a call whose args already appear in HISTORY —\n"
         "that result is already known.\n\n"
         'Return JSON exactly: {"thought":"…","tool":"…","args":{…}}\n\n'

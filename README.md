@@ -90,22 +90,13 @@ control flow, not the domain.
 **1 · Install the one dependency**
 
 ```bash
-pip install requests
+pip install groq
 ```
 
-**2 · Pick a provider**
-
-*Groq (fast, needs a free key):*
+**2 · Add your API key**
 
 ```bash
-export GROQ_API_KEY=gsk_...        # free: https://console.groq.com/keys
-```
-
-*Ollama (no key, runs offline):*
-
-```bash
-export PROVIDER=ollama
-ollama pull qwen3.5:9b
+export GROQ_API_KEY=gsk_...        # free key: https://console.groq.com/keys
 ```
 
 **3 · Check it works**
@@ -114,16 +105,11 @@ ollama pull qwen3.5:9b
 python3 step1_one_shot.py
 ```
 
-It prints its provider and model on the first line. If that works, you are set.
+It prints the model it is using on the first line. If that works, you are set.
+The whole lab then runs in well under a minute.
 
-### Choosing a model
-
-| Provider | Default | Notes |
-|---|---|---|
-| `groq` | `openai/gpt-oss-20b` | Whole lab runs in well under a minute. |
-| `ollama` | `qwen3.5:9b` | ~15s per call, so step 3 takes about 3 minutes. |
-
-Either of these two works well. Override with `export MODEL=...` if you need to.
+The default model is `openai/gpt-oss-20b`. If it is ever retired, swap it with
+`export MODEL=...` and nothing else changes.
 
 ---
 
@@ -223,17 +209,17 @@ step3_agent.py       the two steps that finish the loop, and what it's called
 ```
 
 `step1_one_shot.py` also holds the shared plumbing: the two functions that talk
-to the model, the two functions that read `data.json`, and the provider switch.
-Steps 2 and 3 import all of it from there rather than redefining it.
+to the model and the two that read `data.json`. Steps 2 and 3 import all of it
+from there rather than redefining it.
 
 That is on purpose. **The tools and the model never change across the three
 files.** The only thing that changes is the order things run in, and whether
 they repeat. If the agent in step 3 feels smarter than the program in step 1,
 it isn't — it is the same model and the same two tools, wired differently.
 
-Groq and Ollama both accept requests in the same format, so one function talks
-to either. There is no SDK and no framework anywhere in this repository, and
-that is the point.
+The only library here is Groq's own client, which just sends the request and
+retries when you hit a rate limit. There is no agent framework anywhere in this
+repository, and that is the point: everything in step 3 is code you wrote.
 
 ---
 
@@ -241,10 +227,9 @@ that is the point.
 
 | Symptom | Fix |
 |---|---|
-| `No GROQ_API_KEY set` | `export GROQ_API_KEY=gsk_...`, or `export PROVIDER=ollama` |
-| `groq returned 404 ... model does not exist` | That model was retired. `export MODEL=openai/gpt-oss-20b` |
-| `(rate limited, waiting 7s)` | Normal on a free key. It retries itself; just wait. |
-| `(model emitted invalid JSON, retrying)` | Normal. Strict JSON mode occasionally rejects the model's own output. |
-| Connection refused on `PROVIDER=ollama` | Ollama isn't running. Start it, then `ollama pull qwen3.5:9b`. |
-| Agent never finishes / answers nonsense | Try one of the two models under *Choosing a model*. |
+| `The api_key client option must be set` | `export GROQ_API_KEY=gsk_...` |
+| `model does not exist or you do not have access` | That model was retired. Pick a live one from <https://console.groq.com/docs/models> and `export MODEL=...` |
+| A run pauses for a few seconds | A rate limit on the free key. The client waits and retries by itself. |
+| `The model failed to return valid JSON three times` | Rare. Re-run it. |
+| `ModuleNotFoundError: groq` | `pip install groq` |
 | `ModuleNotFoundError: step1_one_shot` | Run from the repo root, not from another directory. |
