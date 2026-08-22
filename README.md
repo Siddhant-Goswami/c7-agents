@@ -230,6 +230,6 @@ repository, and that is the point: everything in step 3 is code you wrote.
 | `The api_key client option must be set` | `export GROQ_API_KEY=gsk_...` |
 | `model does not exist or you do not have access` | That model was retired. Pick a live one from <https://console.groq.com/docs/models> and `export MODEL=...` |
 | A run pauses for a few seconds | A rate limit on the free key. The client waits and retries by itself. |
-| `The model failed to return valid JSON three times` | Rare. Re-run it. |
+| A step shows `None({})` or `none({})` | Expected in step 2. The model has worked the answer out and we have given it no way to say so, so it flails. That is the point of step 2. |
 | `ModuleNotFoundError: groq` | `pip install groq` |
 | `ModuleNotFoundError: step1_one_shot` | Run from the repo root, not from another directory. |

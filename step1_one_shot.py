@@ -59,7 +59,14 @@ def llm_json(prompt: str) -> dict:
 
     `if reflection["answer"]` needs a dict, not a paragraph. That is the only
     difference between this and llm(). Models occasionally fumble the format,
-    so we simply ask again.
+    so we ask again — and if it still cannot manage one, we say so in a dict
+    rather than raising.
+
+    That last part matters more than it looks. A model sometimes replies with
+    nothing usable — most often when it has already met the goal and the only
+    thing we allow it to say is "call another tool". If one bad reply crashes
+    the program, you do not have a loop you can leave running. So a failed
+    reply becomes an ordinary bad step: recorded, visible, and survivable.
     """
     for _ in range(3):
         try:
@@ -69,9 +76,9 @@ def llm_json(prompt: str) -> dict:
                 messages=[{"role": "user", "content": prompt}],
             )
             return json.loads(reply.choices[0].message.content)
-        except (BadRequestError, json.JSONDecodeError):
-            continue  # malformed JSON, from the model or rejected by the API
-    raise RuntimeError("The model failed to return valid JSON three times.")
+        except (BadRequestError, json.JSONDecodeError, TypeError):
+            continue  # malformed, empty, or rejected by the API
+    return {"thought": "the model did not return usable JSON"}
 
 
 DATA = json.loads(pathlib.Path(__file__).with_name("data.json").read_text())
