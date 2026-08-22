@@ -27,28 +27,50 @@ The whole lab answers one question:
 
 ### The one rule
 
-**Predict every new abstraction before you read it.**
+**Work out every new piece before you read it.**
 
 Every file ends in a `PREDICT` block. Those are not homework and they are not
 optional — they *are* the lab. Each one asks the question that makes the next
-abstraction necessary, and the next file contains the answer.
+piece necessary, and the next file contains the answer.
 
 Skim straight through and you will have memorised a diagram. Answer the
-questions first and you will be able to say, for every box, exactly which
-failure comes back if you delete it. That second thing is the point.
+questions first and you will be able to say, for every part of an agent,
+exactly which failure comes back if you delete it. That second thing is the
+point.
 
 ---
 
 ## The problem
 
+Imagine any place where people report problems — an office, a college, a
+hospital. When something breaks, somebody writes it down. That written-down
+complaint is called a **ticket**: a short note with an ID like `T-1002`, a
+description of what went wrong, and a record of who reported it.
+
+Our `data.json` keeps two separate lists, the way a real system would:
+
+- **Tickets** — each one says what the problem is and *who reported it*.
+- **People** — each person has a name, a team, and a **manager**: the person
+  they report to.
+
+The catch is that these lists don't refer to people by name. They use ID
+codes, like a roll number: `E-17`, `E-04`. A ticket tells you it was reported
+by `E-17` and nothing more. To find out that `E-17` is a person called Priya,
+you have to go look up `E-17` in the list of people. And Priya's record won't
+name her manager either — it just says her manager is `E-04`. To get *that*
+name, you look up `E-04`.
+
+So this question:
+
 > **What is the NAME of the manager of the person who filed ticket T-1002?**
 
-`data.json` has tickets and employees. Answering takes three hops:
+can only be answered in three separate lookups, each one handing you the code
+you need for the next:
 
 ```
-get_ticket("T-1002")   -> {filed_by: "E-17"}
-get_employee("E-17")   -> {name: "Priya Raman", manager: "E-04"}
-get_employee("E-04")   -> {name: "Devika Nair"}          <- the answer
+get_ticket("T-1002")   -> {filed_by: "E-17"}                  who reported it
+get_employee("E-17")   -> {name: "Priya Raman", manager: "E-04"}   her manager's code
+get_employee("E-04")   -> {name: "Devika Nair"}               <- the answer
 ```
 
 It is deliberately tiny, and it is chosen for one property:
@@ -101,13 +123,7 @@ It prints its provider and model on the first line. If that works, you are set.
 | `groq` | `openai/gpt-oss-20b` | Whole lab runs in well under a minute. |
 | `ollama` | `qwen3.5:9b` | ~15s per call, so step 3 takes about 3 minutes. |
 
-Override either with `export MODEL=...`.
-
-**Do not use a 3B model for this lab.** We tested `llama3.2:3b`: it plans the
-first hop perfectly, then fails 0/5 at planning hop 3, and — worse — it
-*always* claims an answer even when the data isn't there yet. It would confidently
-stop on iteration 1 with the wrong name. That failure is itself a great
-discussion (see Experiment 4), but it is a bad way to meet the loop.
+Either of these two works well. Override with `export MODEL=...` if you need to.
 
 ---
 
@@ -133,13 +149,14 @@ ticket `T-1007`, produces garbage, because that chain is two hops long and the
 program has no way to notice. Every correct thing about Attempt B was knowledge
 *we* typed into the source.
 
-**`step2_loop.py`** — The **stopping condition** (before the freedom, not after
-the bill), the **loop**, **state**, and the **tool registry**. Part 1 runs a loop
-with no memory: three identical iterations. That is repetition, not iteration.
-Part 2 adds a list, and the program walks the chain by itself. Then it keeps
-going, tries to call a tool named `none` to signal it's finished, fails, and
-burns the rest of the budget — because nothing in it can judge a result or end a
-run.
+**`step2_loop.py`** — Four things: a **stopping condition** (written before you
+grant the freedom, not after the bill arrives), the **loop**, a **memory**, and
+a **list of tools the model is allowed to name**. Part 1 runs a loop with no
+memory and produces three identical turns — that is repetition, not progress.
+Part 2 adds one Python list, and the program walks the three hops by itself,
+without us typing them. Then it keeps going, tries to call a tool named `none`
+to signal that it's finished, fails, and burns the rest of its budget — because
+nothing in it can judge a result or end a run.
 
 **`step3_agent.py`** — **OBSERVE** and **REFLECT**, and the loop closes. Now it
 stops in three iterations because something decided it was done, not because a
@@ -153,20 +170,22 @@ counter ran out. Only here do the five boxes get their names.
 
 Two things worth pausing on, both visible in a normal run:
 
-**The model tries to say "I'm done" through a channel that doesn't exist.**
-In step 2, watch for `none({}) -> no such tool 'none'`. It has the answer and no
-way to tell you. Every field in your contract is a permission to communicate.
+**The model tries to say "I'm done" and has no way to say it.** In step 2, watch
+for `none({}) -> no such tool 'none'`. It has worked the answer out, and the only
+thing it is allowed to reply with is a tool call — so it invents a fake tool
+called `none`. It is not confused; we simply never gave it a way to say
+"finished". Whatever you let a model reply with is the only thing it can tell you.
 
-**OBSERVE and REFLECT can disagree — and REFLECT should win.** On the last
-iteration you will often see OBSERVE misread the result (`"the manager is
-E-01… name still unknown"`) while REFLECT returns `Devika Nair` correctly.
-That is not luck. `reflect()` receives `history` — the raw evidence — while
-OBSERVE only ever sees one step. A step that decides whether you are finished
-cannot do that job on a paraphrase.
+**Two steps can disagree, and the one with better information should win.** On
+the last iteration you will often see OBSERVE misread the result (`"the manager
+is E-01… name still unknown"`) while REFLECT answers `Devika Nair` correctly.
+That is not luck. `reflect()` is handed `history` — everything that actually
+happened — while OBSERVE only ever sees the single most recent step. The step
+that decides whether you are finished should look at the real evidence, not at
+somebody else's summary of it.
 
-That single design decision is the difference between an agent that terminates
-and one that spins until the budget dies. Experiment 2 makes you break it
-on purpose.
+That one decision is the difference between an agent that stops and an agent
+that spins until its budget runs out. Experiment 2 makes you break it on purpose.
 
 ---
 
@@ -182,17 +201,13 @@ one line.
 3. **REFLECT** — delete the `if reflection.get("answer")` branch. Reflection is
    still computed, still printed, and now decides nothing. What species of
    software is this now?
-4. **The weak model** — `PROVIDER=ollama MODEL=llama3.2:3b python3 step3_agent.py`.
-   It will answer confidently and wrongly. Which box failed? Could a better
-   prompt have saved it, or is this a capability floor? How would you *detect*
-   this in production, given it never errors?
 
 Then, before the next session:
 
-5. Swap the two tools for a tool from **your** capstone domain. Change nothing
+4. Swap the two tools for a tool from **your** capstone domain. Change nothing
    else — not the loop, not the five functions. If the loop doesn't survive the
    swap, that tells you something about the loop.
-6. Write your stopping condition first, and defend the number from a budget.
+5. Write your stopping condition first, and defend the number from a budget.
 
 ---
 
@@ -202,20 +217,23 @@ Then, before the next session:
 README.md            this file
 data.json            tickets and employees. no network required.
 
-step1_one_shot.py    the program with no loop  (also holds the givens:
-                       llm, llm_json, and the two tools)
-step2_loop.py        budget, loop, state, tool registry
-step3_agent.py       observe, reflect, and the name of the thing you built
+step1_one_shot.py    the program with no loop
+step2_loop.py        the stopping condition, the loop, and memory
+step3_agent.py       the two steps that finish the loop, and what it's called
 ```
 
-`step1_one_shot.py` holds the plumbing — the provider switch, the two LLM
-helpers, the data loading — and steps 2 and 3 import from it. That is on
-purpose: **the givens never change across the three files.** The only thing
-that changes is the control flow.
+`step1_one_shot.py` also holds the shared plumbing: the two functions that talk
+to the model, the two functions that read `data.json`, and the provider switch.
+Steps 2 and 3 import all of it from there rather than redefining it.
 
-Both providers speak the same OpenAI-shaped API, so there is one code path and
-one `requests` call for both. No SDK. There is no framework in this repository,
-and that is the point.
+That is on purpose. **The tools and the model never change across the three
+files.** The only thing that changes is the order things run in, and whether
+they repeat. If the agent in step 3 feels smarter than the program in step 1,
+it isn't — it is the same model and the same two tools, wired differently.
+
+Groq and Ollama both accept requests in the same format, so one function talks
+to either. There is no SDK and no framework anywhere in this repository, and
+that is the point.
 
 ---
 
@@ -228,5 +246,5 @@ and that is the point.
 | `(rate limited, waiting 7s)` | Normal on a free key. It retries itself; just wait. |
 | `(model emitted invalid JSON, retrying)` | Normal. Strict JSON mode occasionally rejects the model's own output. |
 | Connection refused on `PROVIDER=ollama` | Ollama isn't running. Start it, then `ollama pull qwen3.5:9b`. |
-| Agent never finishes / answers nonsense | Your model is too small. See *Choosing a model*. |
+| Agent never finishes / answers nonsense | Try one of the two models under *Choosing a model*. |
 | `ModuleNotFoundError: step1_one_shot` | Run from the repo root, not from another directory. |

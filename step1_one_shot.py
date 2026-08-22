@@ -8,6 +8,16 @@ You already know how to call an LLM and how to call a tool. This file adds
 nothing to that. It is here so we can agree on what we have — and then find
 the exact place it breaks.
 
+THE SETUP, if you have never seen a ticketing system:
+When something breaks at an office, a college or a hospital, somebody writes
+it down. That written-down complaint is a TICKET — a note with an ID like
+"T-1002", a description, and a record of who reported it. data.json holds
+tickets and people, and neither list names anybody directly: they use ID
+codes, like roll numbers. A ticket says it was filed by "E-17". Looking up
+E-17 gets you her name, and her manager's code — not her manager's name.
+So the question below takes three lookups, and each one hands you the code
+you need for the next.
+
 The question this file asks:
 
     Who decides what happens next?
