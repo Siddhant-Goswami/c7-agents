@@ -1,0 +1,26 @@
+{
+  "tickets": {
+    "T-1002": {
+      "subject": "Payment retry loop on checkout",
+      "filed_by": "E-17",
+      "priority": "high"
+    },
+    "T-1005": {
+      "subject": "Search returns stale results",
+      "filed_by": "E-23",
+      "priority": "medium"
+    },
+    "T-1007": {
+      "subject": "Quarterly access review overdue",
+      "filed_by": "E-01",
+      "priority": "low"
+    }
+  },
+  "employees": {
+    "E-17": { "name": "Priya Raman",  "team": "Payments",  "manager": "E-04" },
+    "E-23": { "name": "Rohit Sharma", "team": "Search",    "manager": "E-09" },
+    "E-04": { "name": "Devika Nair",  "team": "Payments",  "manager": "E-01" },
+    "E-09": { "name": "Meera Iyer",   "team": "Search",    "manager": "E-01" },
+    "E-01": { "name": "Arjun Mehta",  "team": "Executive", "manager": null }
+  }
+}
