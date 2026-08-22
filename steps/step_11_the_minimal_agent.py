@@ -6,9 +6,9 @@ STEP 11 — Name what you built:  S P A O R
 
     SENSE.  PLAN.  ACT.  OBSERVE.  REFLECT.
 
-I deliberately did not start tonight with that diagram. If I had shown you
-five boxes and asked you to implement them, you could have memorised five
-boxes. Instead every box appeared because the program had a specific problem:
+This lab deliberately did not open with that diagram. Five boxes handed to
+you up front are five boxes to memorise. Instead every box appeared here
+because the program hit a specific problem:
 
     we needed the relevant state    →  SENSE appeared
     we needed sequence              →  PLAN appeared

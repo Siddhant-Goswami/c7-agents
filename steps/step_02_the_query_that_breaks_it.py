@@ -85,4 +85,4 @@ except Exception as error:  # noqa: BLE001
 #   Q5. Before we add anything at all — is there something we should decide
 #       FIRST, before we hand a program the freedom to keep going?
 #
-# Answer Q5 in the chat. Then open step_03.
+# Answer Q5 before you continue. Then open step_03.

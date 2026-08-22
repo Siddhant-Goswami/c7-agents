@@ -4,8 +4,8 @@ STEP 10 — Discovery 7 of 7:  REFLECT, and the loop closes
 
     python steps/step_10_reflect.py
 
-Somebody said "an evaluator". Somebody said "check it against the goal".
-Both are right, and both force something we have left unstated all evening:
+If you answered "an evaluator", or "check it against the goal" — both are
+right, and both force something this lab has left unstated the whole way:
 you cannot evaluate anything without a GOAL.
 
 But an evaluator gives you a verdict, not a next move. Something still has to
@@ -147,7 +147,7 @@ else:
 
 
 # ══════════════════════════════════════════════════════════════════════════
-# WATCH IT RUN. Ask after every iteration:
+# WATCH IT RUN. After every iteration, answer:
 # ══════════════════════════════════════════════════════════════════════════
 #
 #   Q1. What changed between this iteration and the last?

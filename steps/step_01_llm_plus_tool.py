@@ -41,7 +41,7 @@ print(answer)
 #
 # The LLM *participates* in this workflow. It does not *control* it.
 #
-#   Q5. So — is this an agent? Say yes or no in the chat, and say why.
+#   Q5. So — is this an agent? Answer yes or no, and say why.
 #   Q6. If not, name the one thing you would have to add. One thing.
 #
 # Then open step_02.

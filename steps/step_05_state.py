@@ -48,7 +48,7 @@ for entry in history:
 #
 # This tiny variable changed the nature of the system: it has a past.
 #
-# And we have just rediscovered the memory lecture. Tonight our memory is an
+# And we have just rediscovered the memory lecture. Here, memory is an
 # embarrassing Python list. That is fine. Architecture first, sophistication
 # later — episodic, semantic and procedural memory are all upgrades to THIS
 # line, not replacements for it.

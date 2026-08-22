@@ -4,8 +4,8 @@ STEP 12 — Closing: the labels come off, and loop engineering begins
 
     python steps/step_12_loop_engineering.py
 
-Prints tonight's closing challenge and the map of what we study next.
-Nothing here calls an API. This is the part you argue about.
+Prints the closing challenge and the map of what comes next.
+Nothing here calls an API. This is the part to argue about.
 """
 
 from lab import rule
@@ -31,7 +31,7 @@ print(
 """
 )
 
-rule("IF I GIVE THIS EXACT AGENT TO TEN TEAMS, DO ALL TEN PERFORM EQUALLY?")
+rule("IF TEN TEAMS GOT THIS EXACT AGENT, WOULD ALL TEN PERFORM EQUALLY?")
 
 print(
     """
@@ -116,13 +116,13 @@ print(
 """
 )
 
-rule("LAST SESSION I ASKED")
+rule("THE QUESTION LECTURE 1 ENDED ON")
 
 print(
     """
   "What did we give the LLM that turned it into an agent?"
 
-  Tonight you wrote the answer. Not another model. Not another tool. Not
+  You just wrote the answer. Not another model. Not another tool. Not
   another API. We gave it a mechanism for experiencing the consequence of one
   decision and using that consequence to make the next decision.
 

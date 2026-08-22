@@ -1,9 +1,9 @@
-"""Run this BEFORE the lecture starts. Takes about ten seconds.
+"""Run this first. Takes about ten seconds.
 
     python setup_check.py
 
-If it prints OK three times, you can follow along tonight without touching
-anything else. If it fails, fix it now, not at minute four of the session.
+If it prints OK three times, you are ready to start step_00.
+If it fails, fix it before you go any further — every step needs all three.
 """
 
 print("1/3  imports ... ", end="", flush=True)

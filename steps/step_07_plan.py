@@ -97,7 +97,7 @@ for step in range(MAX_STEPS):
 #   Q2. We are about to honour `next`. Why not simply let the LLM write and
 #       run arbitrary Python? It would be fewer lines. Give me four reasons.
 #
-#   Q3. Write the line, out loud, that turns {"tool": "x", "args": {...}}
+#   Q3. Write out the line that turns {"tool": "x", "args": {...}}
 #       into an actual function call. What Python type do you need first?
 #
 # Then open step_08.

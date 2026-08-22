@@ -111,7 +111,7 @@ def get_august_rainfall(city: str, year: int) -> dict:
     """Total rainfall for every August weekend of ONE year, in one city.
 
     Note the shape of this tool carefully. It answers for a single year.
-    The goal we are chasing tonight spans ten of them. That gap between
+    The goal in this lab spans ten of them. That gap between
     'what one tool call returns' and 'what the goal needs' is where the
     whole lecture happens.
     """

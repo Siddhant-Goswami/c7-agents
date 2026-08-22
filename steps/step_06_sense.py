@@ -4,10 +4,12 @@ STEP 06 — Discovery 4 of 7:  SENSE
 
     python steps/step_06_sense.py
 
-The board filled up: the goal, the user's request, history, previous tool
-results, what tools exist, what we are allowed to do, the environment.
+Your list probably filled up fast: the goal, the user's request, history,
+previous tool results, what tools exist, what we are allowed to do, the
+environment.
 
-Someone said "context". Someone said "state". Someone said "perception".
+And the word you reached for was probably "context", or "state", or
+"perception".
 
 The word from robotics is SENSE. A Roomba with the best cleaning algorithm
 ever written and no sensor for where it is will clean nothing. Perception

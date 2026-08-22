@@ -4,10 +4,10 @@ STEP 04 — Discovery 2 of 7:  THE LOOP
 
     python steps/step_04_loop.py
 
-Someone said it: a loop. `for`, not `while`, because `for` carries our budget
+The answer is a loop. `for`, not `while`, because `for` carries our budget
 in its own signature — `range(MAX_STEPS)` IS the stopping condition.
 
-This is the first genuinely new thing we have added tonight. Notice what did
+This is the first genuinely new thing we have added. Notice what did
 NOT change: same LLM, same tool, same Python. The intelligence did not get
 more intelligent. We gave the system another turn.
 """
@@ -43,8 +43,8 @@ for step in range(MAX_STEPS):
 # We bought three chances and spent them all on the same chance.
 #
 #   Q3. Name everything iteration 2 would need to know about iteration 1 for
-#       it to be a genuinely different turn. Shout them out; we will write
-#       them on the board.
+#       it to be a genuinely different turn. Write the full list down before
+#       you scroll — you will need it in the next file.
 #
 #   Q4. What is the smallest Python object that could hold that?
 #

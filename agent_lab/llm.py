@@ -2,7 +2,7 @@
 
 Two functions. Both are just: send text to an LLM, get text back.
 
-Everything else in tonight's lab is built out of these two functions,
+Everything else in this lab is built out of these two functions,
 a dictionary, and a Python list. Nothing is imported from a framework,
 because there is no framework.
 """

@@ -4,7 +4,7 @@ STEP 00 — Where we start
 
     python steps/step_00_one_llm_call.py
 
-Before you run it, answer out loud:
+Before you run it, answer this:
 
     What kind of system is this?
 
@@ -32,4 +32,4 @@ print(answer)
 #   Q2. Who decided that `llm()` should be called at all?
 #   Q3. Who decides what happens after `print(answer)`?
 #
-# Write your answer to Q1 in the chat. Then open step_01.
+# Write your answer to Q1 down before you continue. Then open step_01.

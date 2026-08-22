@@ -4,7 +4,7 @@ STEP 08 — ACT, and the boundary you are actually designing
 
     python steps/step_08_act.py
 
-You answered Q2: security, permissions, hallucinated tools that do not exist,
+The answer to Q2: security, permissions, hallucinated tools that do not exist,
 arbitrary side effects on a machine you own.
 
 So the Python type you need is a dictionary — a registry. The model may only
@@ -113,7 +113,7 @@ for step in range(MAX_STEPS):
 #
 #   Q1. The API returned something. Does that mean the action SUCCEEDED?
 #
-# Most rooms say yes. So consider these, one at a time:
+# Most people say yes at first. So consider these, one at a time:
 #
 #       {"ok": True, "data": {"weekends": []}}     ← 200, and empty
 #       {"ok": False, "error": "500 ..."}          ← it failed

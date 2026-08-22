@@ -131,5 +131,5 @@ for step in range(MAX_STEPS):
 #     │              WHO DECIDES WHAT HAPPENS NEXT?                    │
 #     └────────────────────────────────────────────────────────────────┘
 #
-# When somebody in the room answers "the model" — do not agree. Make them
-# dictate the line. Then open step_10.
+# If your answer is "the model" — then write the line. Actually write it, in
+# your editor, before you open step_10 and see it.

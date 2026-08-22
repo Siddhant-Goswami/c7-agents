@@ -8,7 +8,7 @@ and then gets out of the way:
   2. re-exports the four givens — llm, llm_json, and the two weather tools —
      plus two printing helpers.
 
-Nothing in here is part of tonight's argument. Open agent_lab/llm.py and
+Nothing in here is part of the argument. Open agent_lab/llm.py and
 agent_lab/tools.py if you want to see what the givens actually are.
 """
 

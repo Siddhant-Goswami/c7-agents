@@ -12,7 +12,7 @@ Imagine the program we are about to write. It keeps making bad decisions:
     Q1. What actually happens? Name the consequence, not the word "loop".
     Q2. So before we create autonomy, what boundary goes around it?
 
-Wait for the room. Then type ONE line.
+Answer both before you scroll. Then type ONE line.
 """
 
 from lab import rule
@@ -27,7 +27,7 @@ rule("why it is not boring")
 
 print(
     """
-Defend that number out loud. Not "5 feels right" — a budget.
+Now defend that number. Not "5 feels right" — a budget.
 
     "One iteration is roughly 4 LLM calls. On this model that is about
      $0.002. I am willing to spend a cent on one run of this program.
@@ -36,7 +36,7 @@ Defend that number out loud. Not "5 feels right" — a budget.
 That is engineering. A loop with no stop is not a feature you shipped, it is
 an uncontrolled process you released.
 
-Tonight our budget is iterations. In production it becomes dollars, tokens,
+Here the budget is iterations. In production it becomes dollars, tokens,
 wall-clock time, permissions, or a milestone condition — 'stop when the tests
 pass'. Pick one. But have one, and write it BEFORE the first run, not after
 the bill.
