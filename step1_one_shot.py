@@ -41,8 +41,25 @@ from groq import BadRequestError, Groq
 
 MODEL = os.getenv("MODEL", "openai/gpt-oss-20b")
 
-# Reads GROQ_API_KEY from your environment. max_retries makes it sit out the
-# rate limits a free key will hit during a lecture.
+# A key you exported wins; otherwise we read KEY=value lines out of a .env
+# file sitting next to this one, so nobody has to re-export in every shell.
+ENV_FILE = pathlib.Path(__file__).parent / ".env"
+if ENV_FILE.exists():
+    for line in ENV_FILE.read_text().splitlines():
+        line = line.strip()
+        if line and not line.startswith("#") and "=" in line:
+            name, value = line.split("=", 1)
+            os.environ.setdefault(name.strip(), value.strip().strip("\"'"))
+
+if not os.environ.get("GROQ_API_KEY"):
+    raise SystemExit(
+        "No GROQ_API_KEY. Either `export GROQ_API_KEY=gsk_...` or put\n"
+        "GROQ_API_KEY=gsk_... in a .env file next to this script.\n"
+        "Free key: https://console.groq.com/keys"
+    )
+
+# max_retries makes it sit out the rate limits a free key will hit during a
+# lecture.
 client = Groq(max_retries=6)
 
 
