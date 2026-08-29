@@ -223,6 +223,154 @@ repository, and that is the point: everything in step 3 is code you wrote.
 
 ---
 
+---
+
+## Part 2: Build the Harness
+
+Part 1 ended with a working agent: five functions and a stopping condition.
+Part 2 does not add a sixth function to it. It takes that same agent, points
+it at a real machine, breaks it six times, and derives one piece of the
+harness from each break.
+
+Same rule as before, and it matters more here, because every failure below is
+one you will meet in production and only some of them announce themselves:
+
+> **Run the file, watch the failure, and write your answer to the `PREDICT`
+> block before you read the fix.**
+
+The agent does not get smarter anywhere in Part 2. The model never changes,
+and the tools barely do. What changes is what surrounds the loop.
+
+**One amendment to the dependency claim above:** the only libraries in this
+repo are the Groq client, plus the OpenAI Agents SDK for `step9_sdk.py` only,
+which is the one file whose entire point is that somebody else wrote it.
+
+### The six steps
+
+| # | File | The question you answer |
+|---|------|------------------------|
+| 4 | `step4_permissions.py` | What stands between the agent's next reasonable idea and your filesystem? |
+| 5 | `step5_persistence.py` | The process just died. What survived, and what should have? |
+| 6 | `step6_compaction.py` | The context will not fit. What do you throw away, and who notices? |
+| 7 | `step7_memory.py` | What should the agent still know tomorrow, and what must it forget? |
+| 8 | `step8_subagents.py` | One context is doing two jobs. And how does a run know it is stuck? |
+| 9 | `step9_sdk.py` | Which line of the code you just wrote does each SDK noun replace? |
+
+<details>
+<summary><b>Spoilers</b> for Part 2, what each file adds. Open only if you are stuck.</summary>
+
+<br>
+
+**`step4_permissions.py`** adds `permission_gate()`. The agent gets `bash`,
+`read_file` and `write_file`, and an ordinary goal ("summarise this file and
+save the summary over it") destroys the only copy of something. Nothing
+malfunctioned. The gate goes between `plan()` and `act()`, not in the prompt,
+because a rule in a prompt is a request and an `if` statement is not. Denial
+comes back to the agent as a tool result, so it can adapt instead of dying.
+Reads are exempt: a gate you clear forty times is a gate you stop reading.
+
+**`step5_persistence.py`** adds `scratch/state.json`, written after every
+iteration. The real content is the distinction it forces: **state** is what is
+true now, **history** is what happened this run and mostly should not survive,
+**memory** is what survives on purpose and arrives in step 7. Resume is keyed
+on the goal, and that one `if` is the whole safety property.
+
+**`step6_compaction.py`** adds `compact_history()`. `search_docs` returns 2,000
+words per call, so `--no-compact` makes the growth impossible to miss in the
+`in=` column. Compaction keeps the goal, keeps the last two turns verbatim, and
+replaces the rest with one model call. It prints the before and after token
+count, so the saving is a number. It is lossy, by a model, trusted by the next
+turn without review, and the interesting question is which run that kills.
+
+**`step7_memory.py`** adds `scratch/memory.md`, read in on the way in and
+appended to once on the way out. Day one derives which named person owns
+Payments tickets. Day two, a fresh process with a different goal, finishes
+with zero tool calls. The learning prompt is mostly a list of things NOT to
+keep, which is the honest shape of a memory policy. This file is semantic
+memory; a skill file the agent follows is procedural; a timestamped log of
+runs is episodic. All three are text files.
+
+**`step8_subagents.py`** adds `run_subagent()` and the budget layer.
+`--single-context` shows one agent carrying thousands of words of raw research
+into a turn that needed five lines of it. The default run gives the reading job
+a child with a fresh history, a one-tool list and its own step budget, and the
+child hands back a validated dict with `recommendation`, `important_facts` and
+`sources`. It never raises: a failed child returns a structured failure and the
+parent decides. The same file carries `MAX_STEPS`, `MAX_TOKENS`, `MAX_COST` in
+rupees, and `no_progress()`, which is the cheap check, because repetition and
+failure are properties of the history you already hold.
+
+**`step9_sdk.py`** is the same system in the OpenAI Agents SDK, in about forty
+lines, with the mapping table at the top of the file. Nothing new happens. The
+loop did not disappear; you stopped writing it.
+
+</details>
+
+### The demo flags
+
+Every failure in Part 2 has a switch, so you can fire it on cue rather than
+hoping. Run the plain command first, then the flag, and compare.
+
+| Command | What it makes visible |
+|---|---|
+| `python3 step5_persistence.py --kill-at 2` | Exits at iteration 2, as if you had hit Ctrl-C. Run it again with no flag and watch it resume. |
+| `python3 step5_persistence.py --fresh` | Deletes `scratch/state.json` first, so you can replay the cold start. |
+| `python3 step6_compaction.py --no-compact` | The same goal with compaction off. Read only the `in=` column. |
+| `python3 step7_memory.py --reset` | Wipes `scratch/memory.md`, so day one is genuinely cold. |
+| `python3 step8_subagents.py --single-context` | Both phases in one context, so you can see the research crowding the build. |
+| `python3 step8_subagents.py --runaway` | A goal that needs a tool which always fails. `no_progress()` stops it, not the clock. |
+
+Everything any tool writes goes into `scratch/`, and a path check refuses
+anything that resolves outside it. That directory is the blast radius, and it
+is deliberately small enough that you can point a live agent at it on a stage.
+
+### One thing to check before you run steps 6 and 8
+
+Those two files are about context growth, so they deliberately spend tokens.
+`search_docs` returns 2,000 words per call and every turn re-sends every turn
+before it, which is the entire point and also the entire cost.
+
+A free Groq key allows 8,000 tokens per minute and 200,000 per day. Steps 6
+and 8 will bump into both. If you are running the whole lab on a free key,
+turn the prop down first:
+
+```bash
+export SEARCH_WORDS=600
+```
+
+The climb, the compaction and the sub-agent hand-back all still show clearly
+at 600 words, and the day's allowance goes about three times further. Leave it
+at 2,000 on a paid key, where the numbers are more dramatic. If you hit either
+ceiling anyway, the run says so in one sentence instead of a stack trace:
+`OUT OF TOKENS` for the daily quota, `THE WALL` for a single request that does
+not fit.
+
+### What Part 2 adds to the box
+
+```
+harness.py           the shared plumbing for steps 4 to 9. no lessons in it.
+scratch/             the blast radius. every file tool is confined here.
+
+step4_permissions.py the interlock
+step5_persistence.py state, and what deliberately does not survive
+step6_compaction.py  the trade you make when context runs out
+step7_memory.py      what is still true tomorrow
+step8_subagents.py   a second context, and the budget that bounds it
+step9_sdk.py         the same system, in somebody else's words
+```
+
+`harness.py` holds the scratch guard, the five new tools, a token meter, and
+the `plan` / `act` / `reflect` steps that every file from 4 to 8 reuses
+unchanged. It is there so each step file is a readable delta and nothing else.
+`SENSE` and `OBSERVE` are not in it: step 3 derived both and neither was
+deleted from the idea, they are simply left out of Part 2 so a live log fits on
+a screen.
+
+Two numbers now print on every model call: the tokens that call cost, and the
+running total in rupees. In step 2 the budget was iterations, because
+iterations were the only thing we could count.
+
+
 ## If something goes wrong
 
 | Symptom | Fix |
@@ -233,3 +381,11 @@ repository, and that is the point: everything in step 3 is code you wrote.
 | A step shows `None({})` or `none({})` | Expected in step 2. The model has worked the answer out and we have given it no way to say so, so it flails. That is the point of step 2. |
 | `ModuleNotFoundError: groq` | `pip install groq` |
 | `ModuleNotFoundError: step1_one_shot` | Run from the repo root, not from another directory. |
+| `ModuleNotFoundError: agents` or an `openai` import error in step 9 | `pip install -U openai-agents`. It is the one library steps 1 to 8 refuse, and only step 9 needs it. The `-U` matters: the SDK needs a recent `openai` package. |
+| A step 4 run prints `permission denied by user` and then finishes anyway | Working as intended. Denial is returned to the agent as a tool result, so it adapts. Answer `y` at the prompt to see the other branch. |
+| `refused: ... is outside scratch/` | Also working as intended. Every file tool is confined to `scratch/`. Nothing in this repo can write anywhere else, including in a demo that goes wrong. |
+| Step 5 resumes when you wanted a cold start, or says `ALREADY DONE` | `scratch/state.json` is left over from an earlier run of the same goal. `python3 step5_persistence.py --fresh` deletes it. |
+| Step 7 answers day one instantly, or from a stale fact | `scratch/memory.md` already has a line in it from a previous run. `--reset` wipes the file. That is also the failure mode the file is about: nothing in it ever deletes a line, and nothing ever checks one. |
+| A step 6 or step 8 run is slow | `search_docs` returns 2,000 words per call on purpose, and those words are re-sent every turn. That slowness IS the failure the file exists to show. |
+| `OUT OF TOKENS`, or a 429 naming tokens per day | Your key's daily allowance is spent. Wait for the window Groq names, use another key, or `export SEARCH_WORDS=600` and re-run. |
+| `THE WALL`, or a 413 naming tokens per minute | One request was larger than your key is allowed to send. On a free key that is 8,000 tokens. In step 6 with `--no-compact` this is not a fault, it is the demo. |
